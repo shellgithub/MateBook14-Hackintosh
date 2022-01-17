@@ -15,6 +15,12 @@
 
 ### 更新
 
+-2020/04/25  此次更新使用[Matebook_13_14_2020_Hackintosh_OpenCore](https://github.com/Zero-zer0/Matebook_13_14_2020_Hackintosh_OpenCore)项目path补丁和kext，理论此CLOVER可以支持Matebook14 2020款机器。本人Matebook14 2019使用[Matebook_13_14_2020_Hackintosh_OpenCore](https://github.com/Zero-zer0/Matebook_13_14_2020_Hackintosh_OpenCore)所有功能正常，建议使用OpenCore启动，对[Zero-zer0](https://github.com/Zero-zer0)贡献表示感谢。
+
+-2020/02/29  更新CLOVER 5104，AirportBrcmFixup 2.0.6，AppleALC 1.4.6，CPUFriden 1.2.0，Lilu 1.4.1，NoTouchID 1.0.3，NullEthernet 1.0.6，WhateverGreen 1.3.6，新增[IntelBluetoothFirmware ](https://github.com/zxystd/IntelBluetoothFirmware)补丁解决冷启动无法加载蓝牙问题，以上均在Catilina 10.15.3通过测试
+
+-2019/12/20  更新CLOVER为5101，修复HDMI/HDMI音频，新增Catalina2K/4K两套主题，添加蓝牙热启动脚本需配合Fusion虚拟机和TinyCoreLinux使用，新增10.15蓝牙[补丁](/蓝牙补丁)，测试10.14/10.15均工作正常
+
 -2019/06/30  更新CLOVER为4972
 
 -2019/06/29  更新I2C、新增HUAWEI主题，更新后请用Kext Utility.app重建缓存(tools目录下)、添加修改USB WIFI图标及汉化
@@ -23,36 +29,47 @@
 
 ### 已经驱动
 * CPU睿频
-* 睡眠/合盖一晚测试掉电0%
 * 唤醒
 * 录音
 * 扬声器/耳机可自动切换
 * 触摸板/手势
 * USB3.0/2.0
-* HiDPI 1340*894
+* HiDPI
 * HDMI正常
 * 蓝牙/热启动
 
 ###  目前不完善
-* 蓝牙从WIN热启动工作正常，正常关闭开启（替换S/L/E IOBluetoothFamily.kext）购机赠送鼠标不能使用
-* 开启HiDIP分辨率最高设置1340*894，超过900分辨率唤醒会花屏
-* 亮度调节按键无效，但可以通过修改显示器快捷键，设置 - 键盘 - 快捷键 - 显示器 修改快捷键为F1 F2，若设置页面没有显示器选项，接入USB键盘后则可以出现显示器选项
+* 开启HiDIP分辨率睡眠唤醒会有一闪的花屏
 * Camera
+* 耳麦无法录音
 
 ### 无法驱动：
-* WIFI
+* WIFI -- 偶然看到小新pro13(网卡[AX201NGW](https://www.intel.cn/content/www/cn/zh/products/docs/wireless/wi-fi-6-ax201-module-brief.html)M.2: CNVio2接口)更换BCM94360CS2并在Windows成功驱动[帖子链接](https://post.smzdm.com/p/aqnlz47p/)，Matebook 14需要验证是否可行，详细资料看补充说明
 * MX250
 
 ### 补充说明
 * 耳机扬声器切换有底噪或遭遇的请自行打去底噪补丁，[设置方法](#声卡切换底噪睡眠唤醒有噪音解决)见下
 * HiDIP 用RDM切换,[设置方法](#hidip-设置方法)见下面
 * config.plis默认机型为 Macbookpro15,2 使用请自行使用CloveConfigurator生成新的序列号
-* 使用蓝牙补丁IOBluetoothFamily.kext替换S/L/E系统自带驱动，解决热启动蓝牙无法关闭问题，替换后重建缓存，从Win热启动蓝牙即可工作正常
+* 10.15需要先获取权限后才能修改系统文件，获取权限命令如下，重启后需要重新获取：
+```cmd
+sudo -s                # 获取超级权限，并输入密码
+sudo mount -o rw /     # 获取系统读写权限
+killall Finder         # 重启启动Finder
+```
+* 更换网卡方案参考资料 M2(NGFF)[接口定义](https://blog.csdn.net/greless/article/details/51698662),Matebook 14 网卡使用M.2 E键，接口定义内有一组PCIe x2通道，如果这一组PCIe x2通道存在，就可以驱动BCM94360CS2、DW1820A等网卡
 
 ### 准备工具
 * 8G U盘
 * [WePE](http://www.wepe.com.cn/)
 * [苹果镜像](blog.daliansky.net)
+
+## 双系统无损安装要点：
+* 先安装Windows系统，并备份Windows的引导EFI分区的（EFI/Boot和Microsoft）
+* 调整EFI分区，使用DiskGenius将EFI分区调整为200M（没有则新建EFI分区，新建类型一定要选择EFI分区类型），可以将多余MSR分区删掉（强迫症）。EFI分区一般放在硬盘最前面，硬盘前端没有空间就先移动系统分区使硬盘前端有200M空间再新建或者调整。因为MAC系统安装必须满足EFI分区大于200M才可以
+* 新建MAC系统分区，这个步骤非常重要，如果不新建在一下个步骤安装MAC就只能整盘格式化，创建MAC分区是无损安装的核心。根据个人要求调整好Windows系统和其他分区，再将剩余硬盘空间全部新建为苹果分区，新建任选MAC类型分区格式都可以（此处我选择的是HFS+）。这样下一个步骤去安装MAC系统就能识别到苹果分区，从而不需要格式整个硬盘
+* 安装MAC系统，系统安装完成后替换EFI分区的CLOVER
+* 重启系统重建缓存
 
 ### 安装过程
 * 调整硬盘分区，U盘刻录WePE(已制作好PE盘跳过)
@@ -79,26 +96,16 @@
 * 教程结束
 
 ### HiDIP 设置方法
-* 使用HiDIP脚本进行设置 [Github](https://github.com/xzhih/one-key-hidpi)  
-* 复制 **DisplayVendorID-dae** 和 **Icons.plist** 到 **/系统/资源库/Displays/Contents/Resources/Overrides/**  
-* 使用DRM切换到1340*894分辨率  
-![img](/HiDPI/01.png)
-![img](/HiDPI/02.png)
-![img](/HiDPI/03.png)
-![img](/HiDPI/04.png)
+* 使用HiDIP脚本进行设置 [Github](https://github.com/xzhih/one-key-hidpi) ，选择开启HiDPI（不注入EDID），图标自选，自定义几个3:2的分辨率，如1650x1100, 1500x1000, 1350x900等
+* 或复制 **DisplayVendorID-dae** 和 **Icons.plist** 到 **/系统/资源库/Displays/Contents/Resources/Overrides/**  
+* 重启使用DRM切换到分辨率
 
 ### 声卡切换底噪，睡眠唤醒有噪音解决
 给声卡打ALCPlugFix 修复耳机切换底噪问题
-![img](/ALC256_ALCPlugFix/01.png)
 
 ### 更改USB WIFI图标及汉化
-效果
-![img](/usb-wifi/wifi-icns.png)
-
 1、拷贝dark(暗色图标)或者light(浅色图标)文件夹内文件到 /资源库/Application Support/WLAN/StatusBarApp.app(显示包内容)/Contents/Resources 替换原图标，退出登录即可生效
-![img](/usb-wifi/wifi-icns-1.png)
 
 2、汉化WIFI语言，同上将lang-cn下Localizable.strings 文件拷贝到 /资源库/Application Support/WLAN/StatusBarApp.app(显示包内容)/Contents/Resources/English.lproj 替换原文件，退出登录即可生效
-![img](/usb-wifi/wifi-lang-cn.png)
 
 ### 教程结束
